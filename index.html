@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>보강·교체 교사 찾기 - 오성고등학교 2026학년도 1학기</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Malgun Gothic', sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+header {
+  background: linear-gradient(135deg, #1e3a5f, #2e6da4);
+  color: white; padding: 20px 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+header h1 { font-size: 22px; }
+header p { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+
+.container { max-width: 960px; margin: 30px auto; padding: 0 20px; }
+
+.card {
+  background: white; border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 24px; margin-bottom: 20px;
+}
+.card-title {
+  font-size: 15px; font-weight: bold; color: #1e3a5f;
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 2px solid #e8f0fe;
+}
+
+/* Step 1: 선생님 선택 */
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-input {
+  width: 100%; padding: 11px 14px; border: 2px solid #ddd;
+  border-radius: 8px; font-size: 15px; outline: none; font-family: inherit;
+}
+.search-input:focus { border-color: #2e6da4; }
+
+.teacher-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px;
+  max-height: 260px; overflow-y: auto; padding: 4px;
+}
+.t-btn {
+  padding: 9px 6px; border: 2px solid #ddd; background: white;
+  color: #333; border-radius: 8px; cursor: pointer; font-size: 13px;
+  font-weight: bold; text-align: center; transition: all 0.15s;
+}
+.t-btn:hover { border-color: #2e6da4; color: #2e6da4; background: #e8f0fe; }
+.t-btn.selected { background: #2e6da4; color: white; border-color: #2e6da4; }
+.homeroom-tag { font-size: 10px; font-weight: normal; opacity: 0.75; display: block; }
+
+/* Step 2: 교시 선택 */
+.timetable { border-collapse: collapse; width: 100%; }
+.timetable th, .timetable td {
+  border: 1px solid #ddd; padding: 0; text-align: center;
+  font-size: 13px;
+}
+.timetable th {
+  background: #1e3a5f; color: white; padding: 8px 4px; font-weight: bold;
+}
+.timetable td { height: 52px; width: calc(100%/8); }
+.period-cell {
+  background: #f8f9fa; color: #666; font-weight: bold; font-size: 12px;
+}
+.cell-btn {
+  width: 100%; height: 100%; border: none;
+  font-size: 12px; font-weight: bold; background: white;
+  transition: all 0.15s; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+}
+.cell-btn.has-class { background: #fff3e0; color: #e67e22; cursor: pointer; }
+.cell-btn.free { background: #f0f4f8; color: #aaa; cursor: pointer; }
+.cell-btn.free:hover:not(.selected) { background: #dce8f5; }
+.cell-btn.selected { background: #2e6da4 !important; color: white !important; cursor: pointer; }
+.cell-btn.has-class:hover:not(.selected) { filter: brightness(0.92); }
+.class-label { font-size: 11px; }
+.free-label { font-size: 10px; color: #ccc; }
+
+@media (max-width: 600px) {
+  .timetable th { font-size: 11px; padding: 6px 2px; }
+  .timetable td { height: 44px; }
+  .cell-btn { font-size: 10px; }
+  .class-label { font-size: 9px; }
+}
+
+/* 결과 */
+.result-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.result-info { font-size: 16px; font-weight: bold; color: #1e3a5f; }
+.badge {
+  padding: 3px 12px; border-radius: 20px; font-size: 13px; font-weight: bold;
+}
+.badge-blue { background: #2e6da4; color: white; }
+
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; font-size: 12px; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+.result-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;
+}
+.result-card {
+  background: #f0faf4; border: 2px solid #a8dfc0;
+  border-radius: 10px; padding: 12px 8px; text-align: center;
+}
+.result-card .name { font-size: 15px; font-weight: bold; color: #1e3a5f; }
+.result-card .info { font-size: 11px; color: #888; margin-top: 3px; }
+.result-card .hr-badge {
+  display: inline-block; background: #e67e22; color: white;
+  font-size: 10px; padding: 1px 7px; border-radius: 10px; margin-top: 4px;
+}
+.placeholder { text-align: center; padding: 40px; color: #bbb; font-size: 15px; }
+.placeholder .icon { font-size: 36px; display: block; margin-bottom: 8px; }
+
+.step-label {
+  display: inline-block; background: #2e6da4; color: white;
+  font-size: 12px; padding: 2px 10px; border-radius: 10px; margin-right: 8px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔄 보강·교체 교사 찾기</h1>
+  <p>오성고등학교 2026학년도 1학기 · 본인 이름을 선택한 후 원하는 교시를 클릭하세요</p>
+</header>
+
+<div class="container">
+
+  <!-- 사용법 안내 -->
+  <div class="card" style="background:#e8f0fe;border-left:4px solid #2e6da4;">
+    <div style="font-size:14px;color:#1e3a5f;font-weight:bold;margin-bottom:10px;">📖 사용 방법</div>
+    <div style="font-size:13px;color:#333;line-height:2;">
+      <b>STEP 1.</b> 본인 이름을 선택하세요<br>
+      <b>STEP 2.</b> 시간표에서 원하는 교시를 클릭하세요<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;🟠 <b>수업 있는 칸</b> 클릭 → 내 수업을 <b>대신해줄</b> 선생님 찾기<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;⬜ <b>공강 칸</b> 클릭 → 내가 <b>대신 들어갈 수 있는</b> 수업 찾기
+    </div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="card">
+    <div class="card-title"><span class="step-label">STEP 1</span> 본인 이름 선택</div>
+    <input class="search-input" type="text" placeholder="🔍 이름 검색 (예: 홍길동)..." oninput="filterTeachers(this.value)" id="teacherSearch">
+    <div class="teacher-grid" id="teacherGrid"></div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card" id="step2Card" style="display:none">
+    <div class="card-title"><span class="step-label">STEP 2</span> 교시 선택
+      <span id="selectedTeacherName" style="color:#e67e22; margin-left:8px;"></span>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#fff3e0;border:1px solid #e67e22;"></div> 수업 있는 칸 (클릭 → 대신해줄 선생님)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f0f4f8;border:1px solid #ccc;"></div> 공강 칸 (클릭 → 내가 대신 들어갈 수업)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f3e8ff;border:1px solid #9b59b6;"></div> 자봉·사제 (클릭 불가)</div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="timetable" id="timetable"></table>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="card" id="resultCard" style="display:none">
+    <div class="result-header">
+      <div class="result-info" id="resultTitle">교체 가능 교사</div>
+      <div class="badge badge-blue" id="resultCount"></div>
+    </div>
+    <div id="resultBody">
+      <div class="placeholder"><span class="icon">👆</span>위에서 시간을 선택하세요</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const teacherSchedule = {"김병호": {"월1": "1-6", "월2": "1-8", "월3": null, "월4": "1-9", "월5": null, "월6": "1-2", "월7": "자봉", "화1": null, "화2": "1-1", "화3": "1-7", "화4": null, "화5": "1-4", "화6": null, "화7": "1-5", "수1": null, "수2": null, "수3": "1-6", "수4": null, "수5": "사제", "수6": null, "수7": "1-7", "목1": null, "목2": "1-4", "목3": null, "목4": "1-3", "목5": null, "목6": "1-9", "목7": "1-8", "금1": "1-3", "금2": "1-2", "금3": null, "금4": null, "금5": "1-2", "금6": null, "금7": "1-1"}, "하다정": {"월1": null, "월2": "1-4", "월3": "1-3", "월4": null, "월5": "1-5", "월6": null, "월7": "자봉", "화1": "3-7", "화2": null, "화3": "3-4", "화4": "3-2", "화5": null, "화6": "3-1", "화7": null, "수1": "3-5", "수2": "3-3", "수3": null, "수4": "3-8", "수5": "3-6", "수6": null, "수7": null, "목1": "1-2", "목2": "1-7", "목3": null, "목4": "1-6", "목5": "1-1", "목6": null, "목7": null, "금1": null, "금2": null, "금3": "1-5", "금4": "1-8", "금5": null, "금6": "1-9", "금7": null}, "박수민": {"월1": null, "월2": "2-8", "월3": null, "월4": "2-1", "월5": null, "월6": "2-5", "월7": "자봉", "화1": null, "화2": "2-4", "화3": "2-7", "화4": null, "화5": "2-6", "화6": "2-2", "화7": null, "수1": "2-3", "수2": null, "수3": "2-9", "수4": "2-6", "수5": "사제", "수6": null, "수7": null, "목1": "2-7", "목2": null, "목3": "2-2", "목4": null, "목5": "2-1", "목6": null, "목7": "2-4", "금1": null, "금2": "2-3", "금3": null, "금4": "2-8", "금5": "2-3", "금6": null, "금7": "2-9"}, "전민": {"월1": "3-9", "월2": "3-6", "월3": null, "월4": "3-4", "월5": null, "월6": "3-5", "월7": "자봉", "화1": null, "화2": "3-3", "화3": null, "화4": "2-5", "화5": null, "화6": "2-9", "화7": null, "수1": "2-7", "수2": null, "수3": null, "수4": "2-5", "수5": null, "수6": null, "수7": "2-1", "목1": "2-8", "목2": null, "목3": "2-3", "목4": null, "목5": "2-6", "목6": "3-8", "목7": null, "금1": "3-7", "금2": null, "금3": null, "금4": "2-4", "금5": null, "금6": null, "금7": "2-2"}, "김동현": {"월1": "2-2", "월2": null, "월3": null, "월4": null, "월5": "2-4", "월6": "2-8", "월7": "자봉", "화1": null, "화2": null, "화3": "2-8", "화4": "2-9", "화5": null, "화6": "2-6", "화7": "2-3", "수1": null, "수2": "2-5", "수3": "2-3", "수4": null, "수5": "사제", "수6": null, "수7": "2-9", "목1": null, "목2": "2-4", "목3": "2-1", "목4": null, "목5": "2-7", "목6": null, "목7": "2-2", "금1": null, "금2": "2-6", "금3": "2-7", "금4": null, "금5": "2-9", "금6": null, "금7": "2-1"}, "이현용": {"월1": null, "월2": null, "월3": "2-5", "월4": "2-6", "월5": null, "월6": "2-7", "월7": "자봉", "화1": "3-1", "화2": "3-6", "화3": null, "화4": null, "화5": null, "화6": null, "화7": null, "수1": "2-8", "수2": "2-1", "수3": null, "수4": "2-2", "수5": "3-7", "수6": null, "수7": null, "목1": null, "목2": "2-9", "목3": null, "목4": null, "목5": "2-3", "목6": null, "목7": "3-2", "금1": "2-4", "금2": null, "금3": "3-8", "금4": "3-9", "금5": null, "금6": null, "금7": "2-5"}, "김희진": {"월1": null, "월2": "3-1", "월3": "3-2", "월4": null, "월5": "3-4", "월6": "3-9", "월7": "자봉", "화1": null, "화2": "3-4", "화3": null, "화4": "3-3", "화5": null, "화6": null, "화7": "3-7", "수1": null, "수2": "3-6", "수3": "3-7", "수4": null, "수5": null, "수6": null, "수7": "3-8", "목1": null, "목2": "3-8", "목3": null, "목4": "3-9", "목5": null, "목6": "3-1", "목7": "3-6", "금1": "3-5", "금2": "3-3", "금3": null, "금4": null, "금5": "3-6", "금6": "3-2", "금7": null}, "서주경": {"월1": null, "월2": null, "월3": null, "월4": "3-2", "월5": null, "월6": "3-7", "월7": "자봉", "화1": null, "화2": "3-9", "화3": "3-1", "화4": null, "화5": "3-5", "화6": null, "화7": "3-8", "수1": null, "수2": "3-2", "수3": null, "수4": "3-5", "수5": null, "수6": null, "수7": "3-3", "목1": "3-4", "목2": "3-5", "목3": null, "목4": null, "목5": "3-1", "목6": null, "목7": "3-9", "금1": "3-6", "금2": null, "금3": null, "금4": "3-3", "금5": "3-3", "금6": null, "금7": "3-4"}, "조은진": {"월1": "1-3", "월2": "1-7", "월3": null, "월4": null, "월5": "1-9", "월6": "1-8", "월7": "자봉", "화1": null, "화2": null, "화3": "1-2", "화4": "1-1", "화5": "1-5", "화6": null, "화7": "1-4", "수1": "1-4", "수2": null, "수3": "1-7", "수4": null, "수5": "사제", "수6": null, "수7": "1-9", "목1": "1-5", "목2": null, "목3": "1-2", "목4": null, "목5": "1-8", "목6": null, "목7": "1-3", "금1": null, "금2": "1-1", "금3": null, "금4": null, "금5": "1-3", "금6": "1-6", "금7": null}, "이경섭": {"월1": null, "월2": null, "월3": null, "월4": null, "월5": "1-2", "월6": "1-6", "월7": "자봉", "화1": "1-6", "화2": "1-9", "화3": null, "화4": null, "화5": "1-7", "화6": null, "화7": "1-3", "수1": "1-8", "수2": null, "수3": "1-1", "수4": "1-5", "수5": "사제", "수6": null, "수7": null, "목1": null, "목2": null, "목3": "1-7", "목4": "1-9", "목5": null, "목6": "1-4", "목7": "1-1", "금1": "1-2", "금2": "1-3", "금3": null, "금4": null, "금5": "1-9", "금6": null, "금7": "1-8"}, "김진흡": {"월1": "2-5", "월2": null, "월3": "2-1", "월4": null, "월5": "2-3", "월6": null, "월7": "자봉", "화1": "2-1", "화2": "2-5", "화3": null, "화4": "2-3", "화5": null, "화6": null, "화7": null, "수1": "2-9", "수2": "2-7", "수3": null, "수4": "2-3", "수5": null, "수6": null, "수7": null, "목1": "2-5", "목2": null, "목3": "2-9", "목4": "2-7", "목5": null, "목6": null, "목7": null, "금1": "2-9", "금2": null, "금3": "2-1", "금4": "2-7", "금5": null, "금6": null, "금7": null}, "김주혁": {"월1": "2-6", "월2": "2-4", "월3": null, "월4": null, "월5": "2-8", "월6": null, "월7": "자봉", "화1": "2-8", "화2": null, "화3": null, "화4": "2-2", "화5": "2-5", "화6": null, "화7": "2-4", "수1": "2-5", "수2": "2-8", "수3": null, "수4": null, "수5": "사제", "수6": null, "수7": "2-2", "목1": "2-2", "목2": "2-5", "목3": null, "목4": "2-6", "목5": null, "목6": null, "목7": null, "금1": null, "금2": "2-4", "금3": "2-6", "금4": null, "금5": "2-8", "금6": "2-5", "금7": null}, "전재성": {"월1": null, "월2": null, "월3": "2-6", "월4": "2-8", "월5": null, "월6": "2-3", "월7": "자봉", "화1": null, "화2": null, "화3": "2-1", "화4": "2-8", "화5": null, "화6": "2-3", "화7": "2-6", "수1": null, "수2": null, "수3": "2-1", "수4": "2-8", "수5": null, "수6": null, "수7": null, "목1": null, "목2": "2-3", "목3": "2-6", "목4": null, "목5": "2-8", "목6": "2-1", "목7": null, "금1": null, "금2": "1-5", "금3": null, "금4": "2-3", "금5": null, "금6": "2-1", "금7": "2-6"}, "최재혁": {"월1": "2-7", "월2": null, "월3": "2-9", "월4": "2-4", "월5": null, "월6": "2-2", "월7": "자봉", "화1": "2-2", "화2": null, "화3": "2-4", "화4": null, "화5": "2-9", "화6": "2-7", "화7": null, "수1": null, "수2": "2-2", "수3": null, "수4": "2-9", "수5": "사제", "수6": null, "수7": null, "목1": null, "목2": "2-2", "목3": "2-7", "목4": null, "목5": "2-4", "목6": null, "목7": "2-9", "금1": null, "금2": null, "금3": "2-4", "금4": null, "금5": "2-2", "금6": "2-7", "금7": null}, "강정호": {"월1": null, "월2": null, "월3": "3-5", "월4": null, "월5": "3-1", "월6": "3-6", "월7": "자봉", "화1": null, "화2": "3-5", "화3": null, "화4": "3-6", "화5": "3-2", "화6": null, "화7": null, "수1": "3-4", "수2": null, "수3": "3-1", "수4": null, "수5": "3-5", "수6": null, "수7": null, "목1": null, "목2": "3-3", "목3": null, "목4": null, "목5": "3-4", "목6": "3-6", "목7": null, "금1": "3-3", "금2": null, "금3": null, "금4": "3-2", "금5": null, "금6": "3-4", "금7": null}, "이강원": {"월1": "3-4", "월2": null, "월3": "1-4", "월4": "3-6", "월5": null, "월6": null, "월7": "자봉", "화1": null, "화2": "3-2", "화3": null, "화4": "3-5", "화5": null, "화6": "3-3", "화7": "3-1", "수1": null, "수2": null, "수3": null, "수4": "3-3", "수5": null, "수6": null, "수7": "3-2", "목1": null, "목2": "3-1", "목3": "3-3", "목4": null, "목5": "3-5", "목6": null, "목7": "3-4", "금1": null, "금2": "3-1", "금3": "3-2", "금4": null, "금5": "3-2", "금6": "3-6", "금7": null}, "윤보희": {"월1": null, "월2": null, "월3": null, "월4": "3-9", "월5": null, "월6": "3-8", "월7": "자봉", "화1": null, "화2": "3-7", "화3": "3-8", "화4": null, "화5": "3-9", "화6": "3-9", "화7": null, "수1": "3-7", "수2": "3-8", "수3": null, "수4": "3-9", "수5": null, "수6": null, "수7": "3-7", "목1": null, "목2": null, "목3": "3-9", "목4": null, "목5": "3-8", "목6": "1-6", "목7": null, "금1": null, "금2": "3-8", "금3": "3-7", "금4": null, "금5": "3-8", "금6": null, "금7": "3-7"}, "한지수": {"월1": "1-7", "월2": "1-6", "월3": null, "월4": null, "월5": "1-8", "월6": null, "월7": "자봉", "화1": null, "화2": null, "화3": "1-1", "화4": "1-3", "화5": null, "화6": "1-5", "화7": "1-9", "수1": "1-5", "수2": "1-2", "수3": null, "수4": null, "수5": "사제", "수6": null, "수7": "1-1", "목1": "1-6", "목2": null, "목3": "1-3", "목4": null, "목5": "1-2", "목6": null, "목7": "1-4", "금1": null, "금2": "1-4", "금3": null, "금4": null, "금5": "1-4", "금6": "1-7", "금7": null}, "박주환": {"월1": "1-5", "월2": null, "월3": "1-9", "월4": "2-5", "월5": null, "월6": null, "월7": "자봉", "화1": "1-4", "화2": "1-6", "화3": null, "화4": null, "화5": "1-8", "화6": null, "화7": "1-2", "수1": null, "수2": null, "수3": null, "수4": "1-3", "수5": null, "수6": null, "수7": "2-8", "목1": "1-7", "목2": null, "목3": "1-8", "목4": null, "목5": "2-9", "목6": "2-6", "목7": null, "금1": null, "금2": null, "금3": "1-9", "금4": null, "금5": null, "금6": "1-1", "금7": "2-7"}, "김정은": {"월1": "2-3", "월2": "2-1", "월3": null, "월4": null, "월5": "2-2", "월6": null, "월7": "자봉", "화1": null, "화2": null, "화3": "2-3", "화4": "2-4", "화5": null, "화6": "2-5", "화7": "2-1", "수1": "2-2", "수2": null, "수3": "2-4", "수4": null, "수5": "사제", "수6": null, "수7": null, "목1": null, "목2": null, "목3": null, "목4": "2-1", "목5": "2-5", "목6": null, "목7": "2-3", "금1": "2-5", "금2": null, "금3": "2-2", "금4": null, "금5": "2-4", "금6": "2-4", "금7": null}, "김준엽": {"월1": null, "월2": "2-7", "월3": "2-8", "월4": null, "월5": "2-9", "월6": "2-6", "월7": "자봉", "화1": "2-9", "화2": "2-6", "화3": null, "화4": null, "화5": "2-7", "화6": null, "화7": null, "수1": null, "수2": "2-6", "수3": null, "수4": null, "수5": "사제", "수6": null, "수7": "2-3", "목1": "2-4", "목2": null, "목3": null, "목4": "2-8", "목5": null, "목6": "2-2", "목7": "2-7", "금1": null, "금2": "2-1", "금3": "2-9", "금4": null, "금5": "2-7", "금6": "2-8", "금7": null}, "이호섭": {"월1": null, "월2": null, "월3": "3-9", "월4": null, "월5": "3-6", "월6": null, "월7": "자봉", "화1": "3-2", "화2": null, "화3": "3-5", "화4": "3-7", "화5": null, "화6": null, "화7": "3-3", "수1": null, "수2": "3-9", "수3": null, "수4": "3-4", "수5": null, "수6": null, "수7": "3-1", "목1": null, "목2": null, "목3": null, "목4": "3-2", "목5": null, "목6": "3-5", "목7": "3-8", "금1": null, "금2": "3-4", "금3": "3-1", "금4": null, "금5": "3-9", "금6": "3-3", "금7": null}, "서미현": {"월1": "3-8", "월2": null, "월3": "3-1", "월4": "3-7", "월5": null, "월6": "3-2", "월7": "자봉", "화1": null, "화2": null, "화3": null, "화4": null, "화5": "3-1", "화6": "3-4", "화7": null, "수1": "3-3", "수2": null, "수3": "3-8", "수4": "3-2", "수5": null, "수6": null, "수7": null, "목1": "3-6", "목2": null, "목3": "3-4", "목4": "3-7", "목5": null, "목6": null, "목7": null, "금1": null, "금2": "3-9", "금3": null, "금4": "3-5", "금5": "3-4", "금6": null, "금7": "3-6"}, "강동순": {"월1": "3-5", "월2": null, "월3": "3-4", "월4": "3-3", "월5": null, "월6": null, "월7": "자봉", "화1": null, "화2": "3-8", "화3": null, "화4": null, "화5": "3-6", "화6": null, "화7": "3-9", "수1": "3-6", "수2": null, "수3": null, "수4": null, "수5": null, "수6": null, "수7": "3-5", "목1": "3-7", "목2": "3-9", "목3": null, "목4": "3-3", "목5": null, "목6": null, "목7": "3-1", "금1": null, "금2": "3-7", "금3": null, "금4": "3-1", "금5": null, "금6": "3-8", "금7": "3-2"}, "하성범": {"월1": null, "월2": "1-2", "월3": null, "월4": null, "월5": "1-4", "월6": null, "월7": "자봉", "화1": "3-6", "화2": null, "화3": "3-7", "화4": "3-8", "화5": null, "화6": "3-5", "화7": null, "수1": null, "수2": "1-5", "수3": null, "수4": null, "수5": "3-9", "수6": null, "수7": null, "목1": "1-3", "목2": null, "목3": null, "목4": "1-4", "목5": null, "목6": "1-1", "목7": "1-5", "금1": "1-1", "금2": null, "금3": null, "금4": "1-2", "금5": null, "금6": null, "금7": "1-3"}, "박다윤": {"월1": "3-1", "월2": "3-4", "월3": null, "월4": null, "월5": "3-2", "월6": "3-3", "월7": "자봉", "화1": "1-8", "화2": "1-7", "화3": null, "화4": "1-6", "화5": null, "화6": "1-9", "화7": null, "수1": null, "수2": "1-9", "수3": "1-8", "수4": null, "수5": "사제", "수6": null, "수7": null, "목1": "1-9", "목2": null, "목3": null, "목4": null, "목5": null, "목6": "1-7", "목7": "1-6", "금1": null, "금2": "1-7", "금3": "1-8", "금4": null, "금5": "1-7", "금6": null, "금7": "1-6"}, "김윤정": {"월1": null, "월2": "1-1", "월3": "1-2", "월4": "1-3", "월5": null, "월6": null, "월7": "자봉", "화1": null, "화2": "1-4", "화3": "1-5", "화4": null, "화5": null, "화6": null, "화7": null, "수1": null, "수2": null, "수3": null, "수4": null, "수5": null, "수6": null, "수7": null, "목1": null, "목2": null, "목3": null, "목4": null, "목5": null, "목6": null, "목7": null, "금1": null, "금2": null, "금3": null, "금4": null, "금5": null, "금6": null, "금7": null}, "정홍식": {"월1": "1-4", "월2": "1-5", "월3": null, "월4": "1-1", "월5": null, "월6": null, "월7": "자봉", "화1": "1-3", "화2": null, "화3": "1-4", "화4": "1-2", "화5": null, "화6": null, "화7": "1-1", "수1": "1-3", "수2": null, "수3": null, "수4": "1-2", "수5": null, "수6": null, "수7": "1-5", "목1": null, "목2": "1-3", "목3": null, "목4": null, "목5": "1-4", "목6": "1-2", "목7": null, "금1": null, "금2": null, "금3": "1-1", "금4": "1-5", "금5": null, "금6": "3-9", "금7": null}, "최진관": {"월1": "1-9", "월2": null, "월3": "1-6", "월4": "1-7", "월5": null, "월6": null, "월7": "자봉", "화1": null, "화2": null, "화3": "1-8", "화4": "1-7", "화5": null, "화6": "1-6", "화7": "2-9", "수1": null, "수2": null, "수3": "1-9", "수4": "1-8", "수5": null, "수6": null, "수7": null, "목1": "3-9", "목2": "1-6", "목3": null, "목4": null, "목5": "1-7", "목6": "2-9", "목7": null, "금1": "1-8", "금2": "2-9", "금3": null, "금4": null, "금5": null, "금6": null, "금7": "1-9"}, "조해영": {"월1": "2-8", "월2": null, "월3": "2-7", "월4": "2-9", "월5": null, "월6": null, "월7": "자봉", "화1": "2-7", "화2": null, "화3": null, "화4": null, "화5": "2-8", "화6": "3-8", "화7": null, "수1": null, "수2": "2-9", "수3": "2-7", "수4": null, "수5": null, "수6": null, "수7": null, "목1": null, "목2": null, "목3": "1-1", "목4": "3-8", "목5": null, "목6": "3-7", "목7": "2-8", "금1": "1-4", "금2": null, "금3": "1-2", "금4": "1-3", "금5": null, "금6": "2-9", "금7": null}, "서성민": {"월1": null, "월2": "3-7", "월3": null, "월4": "3-8", "월5": "3-9", "월6": null, "월7": "자봉", "화1": null, "화2": null, "화3": "3-9", "화4": null, "화5": "3-7", "화6": "3-7", "화7": null, "수1": "1-6", "수2": "1-7", "수3": null, "수4": null, "수5": "3-8", "수6": null, "수7": null, "목1": null, "목2": "1-5", "목3": null, "목4": "1-8", "목5": "1-9", "목6": null, "목7": "3-7", "금1": "3-8", "금2": null, "금3": "3-9", "금4": null, "금5": "3-7", "금6": null, "금7": null}, "박은제": {"월1": null, "월2": "2-9", "월3": "3-8", "월4": null, "월5": "2-7", "월6": null, "월7": "자봉", "화1": "3-9", "화2": null, "화3": "2-9", "화4": "2-7", "화5": null, "화6": null, "화7": "2-8", "수1": "3-8", "수2": "3-7", "수3": null, "수4": "2-7", "수5": null, "수6": null, "수7": null, "목1": null, "목2": null, "목3": "3-7", "목4": null, "목5": "3-9", "목6": "2-8", "목7": null, "금1": "3-9", "금2": "2-8", "금3": null, "금4": "2-9", "금5": null, "금6": "3-7", "금7": "3-8"}, "최희만": {"월1": null, "월2": "3-9", "월3": "3-7", "월4": null, "월5": "3-8", "월6": null, "월7": "자봉", "화1": null, "화2": "2-8", "화3": null, "화4": "3-9", "화5": null, "화6": null, "화7": "2-7", "수1": null, "수2": null, "수3": "2-8", "수4": "3-7", "수5": null, "수6": null, "수7": "3-9", "목1": "3-8", "목2": null, "목3": null, "목4": null, "목5": "3-7", "목6": "2-7", "목7": null, "금1": null, "금2": "2-7", "금3": null, "금4": "3-8", "금5": null, "금6": null, "금7": "2-8"}, "김정수": {"월1": null, "월2": "2-3", "월3": null, "월4": "1-2", "월5": null, "월6": "2-1", "월7": "자봉", "화1": "2-5", "화2": "2-1", "화3": null, "화4": null, "화5": "1-1", "화6": null, "화7": "2-2", "수1": null, "수2": null, "수3": "2-2", "수4": null, "수5": "사제", "수6": null, "수7": "2-4", "목1": "2-3", "목2": "2-6", "목3": null, "목4": "2-4", "목5": null, "목6": null, "목7": "2-5", "금1": "2-6", "금2": null, "금3": null, "금4": null, "금5": "2-6", "금6": "1-3", "금7": null}, "박진철": {"월1": "1-1", "월2": "2-6", "월3": null, "월4": null, "월5": "1-3", "월6": null, "월7": "자봉", "화1": "2-6", "화2": null, "화3": null, "화4": "1-8", "화5": null, "화6": "1-1", "화7": "1-7", "수1": null, "수2": null, "수3": "1-5", "수4": null, "수5": "사제", "수6": null, "수7": "1-2", "목1": null, "목2": null, "목3": "1-6", "목4": "1-2", "목5": null, "목6": "1-3", "목7": "2-6", "금1": "1-9", "금2": null, "금3": null, "금4": null, "금5": "1-1", "금6": "1-4", "금7": null}, "안세령": {"월1": null, "월2": "2-5", "월3": null, "월4": null, "월5": "2-6", "월6": "2-4", "월7": "자봉", "화1": "1-9", "화2": "1-3", "화3": null, "화4": null, "화5": "1-2", "화6": "1-4", "화7": null, "수1": "1-7", "수2": null, "수3": null, "수4": null, "수5": "사제", "수6": null, "수7": "1-8", "목1": null, "목2": null, "목3": "3-6", "목4": "1-1", "목5": null, "목6": "1-5", "목7": null, "금1": "2-1", "금2": "2-2", "금3": null, "금4": "1-6", "금5": "1-8", "금6": "2-3", "금7": null}, "정주현": {"월1": "1-8", "월2": "1-9", "월3": null, "월4": null, "월5": "1-6", "월6": "1-3", "월7": "자봉", "화1": null, "화2": null, "화3": null, "화4": "1-5", "화5": null, "화6": "1-7", "화7": "1-6", "수1": "1-9", "수2": "1-4", "수3": null, "수4": "1-1", "수5": "사제", "수6": null, "수7": null, "목1": null, "목2": null, "목3": "1-4", "목4": null, "목5": "1-5", "목6": null, "목7": null, "금1": null, "금2": "1-8", "금3": "1-7", "금4": null, "금5": "1-6", "금6": null, "금7": "1-2"}, "이성훈": {"월1": null, "월2": "3-5", "월3": "3-6", "월4": null, "월5": null, "월6": "3-4", "월7": "자봉", "화1": "3-4", "화2": null, "화3": null, "화4": null, "화5": null, "화6": "3-6", "화7": "3-5", "수1": null, "수2": "1-6", "수3": "3-5", "수4": null, "수5": null, "수6": null, "수7": null, "목1": "1-4", "목2": null, "목3": "1-9", "목4": "1-7", "목5": null, "목6": "1-8", "목7": null, "금1": null, "금2": null, "금3": "3-6", "금4": "3-4", "금5": null, "금6": null, "금7": "1-5"}, "전은지": {"월1": "2-4", "월2": "2-2", "월3": null, "월4": null, "월5": "2-5", "월6": null, "월7": "자봉", "화1": null, "화2": "2-3", "화3": "2-6", "화4": null, "화5": "2-2", "화6": "2-1", "화7": null, "수1": "2-4", "수2": null, "수3": null, "수4": "2-1", "수5": null, "수6": null, "수7": "2-6", "목1": "2-1", "목2": null, "목3": "2-5", "목4": "2-2", "목5": null, "목6": "2-3", "목7": null, "금1": null, "금2": "2-5", "금3": "2-3", "금4": "2-6", "금5": null, "금6": null, "금7": "2-4"}, "이재익": {"월1": null, "월2": null, "월3": "2-2", "월4": "2-3", "월5": null, "월6": null, "월7": "자봉", "화1": "2-3", "화2": null, "화3": "2-5", "화4": null, "화5": "2-1", "화6": "2-4", "화7": null, "수1": "2-1", "수2": null, "수3": null, "수4": "2-4", "수5": "사제", "수6": null, "수7": "2-5", "목1": null, "목2": "2-1", "목3": "2-4", "목4": null, "목5": "2-2", "목6": null, "목7": null, "금1": "2-2", "금2": null, "금3": null, "금4": "2-5", "금5": "2-1", "금6": null, "금7": "2-3"}, "최신효": {"월1": "3-2", "월2": null, "월3": null, "월4": "3-1", "월5": "3-3", "월6": null, "월7": "자봉", "화1": null, "화2": null, "화3": "3-3", "화4": null, "화5": "3-4", "화6": null, "화7": "3-6", "수1": null, "수2": "3-4", "수3": "3-6", "수4": null, "수5": "3-1", "수6": null, "수7": null, "목1": "3-1", "목2": "3-4", "목3": null, "목4": "3-6", "목5": "3-2", "목6": null, "목7": null, "금1": "3-2", "금2": null, "금3": "3-3", "금4": null, "금5": "3-1", "금6": null, "금7": null}, "김영근": {"월1": null, "월2": "3-2", "월3": null, "월4": null, "월5": "3-5", "월6": null, "월7": "자봉", "화1": null, "화2": null, "화3": "3-6", "화4": null, "화5": "3-3", "화6": null, "화7": "3-2", "수1": null, "수2": "3-1", "수3": "3-2", "수4": null, "수5": "3-3", "수6": null, "수7": null, "목1": "3-3", "목2": null, "목3": "3-1", "목4": "3-5", "목5": null, "목6": null, "목7": null, "금1": null, "금2": null, "금3": "3-5", "금4": "3-6", "금5": null, "금6": null, "금7": "3-1"}, "김종숙": {"월1": null, "월2": null, "월3": null, "월4": "3-5", "월5": null, "월6": "3-1", "월7": "자봉", "화1": "3-3", "화2": null, "화3": "3-2", "화4": "3-1", "화5": null, "화6": null, "화7": "3-4", "수1": null, "수2": "3-5", "수3": "3-4", "수4": null, "수5": "3-2", "수6": null, "수7": null, "목1": "3-5", "목2": null, "목3": "3-2", "목4": "3-4", "목5": null, "목6": null, "목7": "3-3", "금1": "3-1", "금2": null, "금3": null, "금4": null, "금5": "3-5", "금6": null, "금7": "3-3"}, "서영호": {"월1": "3-6", "월2": null, "월3": "1-1", "월4": "1-4", "월5": null, "월6": "1-5", "월7": "자봉", "화1": "3-5", "화2": null, "화3": "1-3", "화4": null, "화5": null, "화6": "1-2", "화7": null, "수1": null, "수2": "1-1", "수3": "1-4", "수4": "1-7", "수5": null, "수6": null, "수7": null, "목1": null, "목2": "1-2", "목3": "1-5", "목4": null, "목5": "1-3", "목6": null, "목7": null, "금1": "3-4", "금2": null, "금3": "1-6", "금4": "1-9", "금5": null, "금6": "1-8", "금7": null}, "박상후": {"월1": "3-7", "월2": null, "월3": "1-7", "월4": "1-8", "월5": null, "월6": "1-9", "월7": "자봉", "화1": "3-8", "화2": null, "화3": "1-6", "화4": null, "화5": null, "화6": "3-2", "화7": null, "수1": "3-9", "수2": null, "수3": "3-3", "수4": "3-6", "수5": null, "수6": null, "수7": null, "목1": null, "목2": "3-7", "목3": "3-8", "목4": null, "목5": null, "목6": "3-9", "목7": null, "금1": null, "금2": "3-5", "금3": "3-4", "금4": null, "금5": null, "금6": "3-1", "금7": null}, "김유정": {"월1": null, "월2": null, "월3": "1-5", "월4": null, "월5": null, "월6": "1-4", "월7": "자봉", "화1": "1-2", "화2": null, "화3": null, "화4": null, "화5": "1-3", "화6": null, "화7": null, "수1": "1-1", "수2": "1-3", "수3": null, "수4": null, "수5": null, "수6": null, "수7": null, "목1": "1-1", "목2": null, "목3": null, "목4": "3-1", "목5": null, "목6": "3-2", "목7": null, "금1": "1-5", "금2": null, "금3": "1-4", "금4": null, "금5": null, "금6": "1-2", "금7": null}, "김경은": {"월1": null, "월2": null, "월3": "3-3", "월4": null, "월5": "1-7", "월6": null, "월7": "자봉", "화1": null, "화2": null, "화3": "1-9", "화4": null, "화5": "1-6", "화6": null, "화7": "1-8", "수1": null, "수2": null, "수3": null, "수4": "1-9", "수5": "3-4", "수6": null, "수7": "3-6", "목1": "1-8", "목2": null, "목3": null, "목4": null, "목5": null, "목6": null, "목7": "3-5", "금1": "1-6", "금2": null, "금3": null, "금4": "1-7", "금5": null, "금6": null, "금7": null}, "이승용": {"월1": "2-9", "월2": "3-3", "월3": "2-3", "월4": null, "월5": null, "월6": null, "월7": "자봉", "화1": null, "화2": "2-7", "화3": "2-2", "화4": "2-1", "화5": null, "화6": null, "화7": null, "수1": "3-1", "수2": "2-4", "수3": "2-6", "수4": null, "수5": null, "수6": null, "수7": null, "목1": "2-6", "목2": "2-7", "목3": "2-8", "목4": "2-9", "목5": null, "목6": null, "목7": null, "금1": "2-8", "금2": "3-2", "금3": "2-5", "금4": null, "금5": null, "금6": null, "금7": null}, "이은혜": {"월1": "1-2", "월2": "1-3", "월3": null, "월4": null, "월5": "1-1", "월6": null, "월7": "자봉", "화1": "1-1", "화2": "1-5", "화3": null, "화4": "1-4", "화5": null, "화6": null, "화7": null, "수1": null, "수2": null, "수3": "1-2", "수4": "1-4", "수5": null, "수6": null, "수7": "1-3", "목1": null, "목2": "3-2", "목3": null, "목4": "1-5", "목5": null, "목6": null, "목7": "1-2", "금1": null, "금2": null, "금3": "1-3", "금4": "1-1", "금5": null, "금6": "1-5", "금7": "1-4"}, "전원주": {"월1": null, "월2": null, "월3": "1-8", "월4": "1-6", "월5": null, "월6": null, "월7": "자봉", "화1": "1-7", "화2": "1-5B", "화3": null, "화4": null, "화5": "1-9", "화6": "1-8", "화7": null, "수1": null, "수2": "1-8", "수3": null, "수4": null, "수5": "사제", "수6": null, "수7": "1-6", "목1": null, "목2": "1-9", "목3": null, "목4": "1-5B", "목5": "1-6", "목6": null, "목7": "1-7", "금1": "1-7", "금2": "1-9", "금3": null, "금4": null, "금5": "1-5", "금6": "1-5B", "금7": null}, "박길영": {"월1": "2-1", "월2": null, "월3": "2-4", "월4": "2-2", "월5": null, "월6": null, "월7": "자봉", "화1": "2-4", "화2": "2-2", "화3": null, "화4": null, "화5": "2-3", "화6": null, "화7": "2-5", "수1": null, "수2": "2-3", "수3": "2-5", "수4": null, "수5": null, "수6": null, "수7": null, "목1": null, "목2": "3-6", "목3": null, "목4": "2-5", "목5": null, "목6": "2-4", "목7": "2-1", "금1": "2-3", "금2": null, "금3": null, "금4": "2-1", "금5": null, "금6": "2-2", "금7": "3-5"}, "박지혜": {"월1": null, "월2": null, "월3": null, "월4": "2-7", "월5": null, "월6": "2-9", "월7": "자봉", "화1": null, "화2": "2-9", "화3": null, "화4": "2-6", "화5": null, "화6": "2-8", "화7": null, "수1": "2-6", "수2": null, "수3": null, "수4": null, "수5": "사제", "수6": null, "수7": "2-7", "목1": "2-9", "목2": "2-8", "목3": null, "목4": null, "목5": "3-3", "목6": "3-4", "목7": null, "금1": "2-7", "금2": null, "금3": "2-8", "금4": null, "금5": "2-5", "금6": "2-6", "금7": null}, "박진우": {"월1": "3-3", "월2": "3-8", "월3": null, "월4": null, "월5": "3-7", "월6": null, "월7": "자봉", "화1": null, "화2": "3-1", "화3": null, "화4": "3-4", "화5": "3-8", "화6": null, "화7": null, "수1": "3-2", "수2": null, "수3": "3-9", "수4": "3-1", "수5": null, "수6": null, "수7": "3-4", "목1": "3-2", "목2": null, "목3": "3-5", "목4": null, "목5": "3-6", "목6": "3-3", "목7": null, "금1": null, "금2": "3-6", "금3": null, "금4": "3-7", "금5": null, "금6": "3-5", "금7": "3-9"}, "김경호": {"월1": null, "월2": null, "월3": null, "월4": null, "월5": "2-1", "월6": "1-1", "월7": "자봉", "화1": "1-5", "화2": "1-8", "화3": null, "화4": null, "화5": "2-4", "화6": null, "화7": null, "수1": "1-2", "수2": null, "수3": "1-3", "수4": "1-6", "수5": null, "수6": null, "수7": "1-4", "목1": null, "목2": null, "목3": null, "목4": "2-3", "목5": null, "목6": "2-5", "목7": "1-9", "금1": null, "금2": null, "금3": null, "금4": "2-2", "금5": null, "금6": null, "금7": "1-7"}};
+
+const teacherHomeroom = {"김병호": "1-2", "하다정": "", "박수민": "2-3", "전민": "", "김동현": "2-9", "이현용": "", "김희진": "3-6", "서주경": "3-3", "조은진": "1-3", "이경섭": "1-9", "김진흡": "", "김주혁": "2-8", "전재성": "", "최재혁": "2-2", "강정호": "", "이강원": "3-2", "윤보희": "3-8", "한지수": "1-4", "박주환": "", "김정은": "2-4", "김준엽": "2-7", "이호섭": "3-9", "서미현": "3-4", "강동순": "", "하성범": "", "박다윤": "1-7", "김윤정": "", "정홍식": "", "최진관": "", "조해영": "", "서성민": "3-7", "박은제": "", "최희만": "", "김정수": "2-6", "박진철": "1-1", "안세령": "1-8", "정주현": "1-6", "이성훈": "", "전은지": "", "이재익": "2-1", "최신효": "3-1", "김영근": "", "김종숙": "3-5", "서영호": "", "박상후": "", "김유정": "", "김경은": "", "이승용": "", "이은혜": "", "전원주": "1-5B", "박길영": "", "박지혜": "2-5B", "박진우": "", "김경호": ""};
+
+const allTeachers = Object.keys(teacherSchedule).sort((a, b) => a.localeCompare(b, 'ko'));
+const days = ['월','화','수','목','금'];
+
+let selectedTeacher = null;
+let selectedSlot = null;
+
+// 선생님 목록 렌더
+function renderTeachers(filter='') {
+  const grid = document.getElementById('teacherGrid');
+  const filtered = filter ? allTeachers.filter(n => n.includes(filter)) : allTeachers;
+  grid.innerHTML = filtered.map(name => {
+    const hr = teacherHomeroom[name];
+    const sel = selectedTeacher === name ? 'selected' : '';
+    return `<button class="t-btn ${sel}" onclick="selectTeacher('${name}')">
+      ${name}
+      
+    </button>`;
+  }).join('');
+}
+
+function filterTeachers(q) { renderTeachers(q); }
+
+function selectTeacher(name) {
+  selectedTeacher = name;
+  selectedSlot = null;
+  renderTeachers(document.getElementById('teacherSearch').value);
+  buildTimetable();
+  document.getElementById('step2Card').style.display = 'block';
+  document.getElementById('selectedTeacherName').textContent = name + ' 선생님';
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('step2Card').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function buildTimetable() {
+  const sched = teacherSchedule[selectedTeacher];
+  let html = '<thead><tr><th style="width:60px">교시</th>';
+  days.forEach(d => html += `<th>${d}요일</th>`);
+  html += '</tr></thead><tbody>';
+
+  for (let p = 1; p <= 7; p++) {
+    html += `<tr><td class="period-cell">${p}교시</td>`;
+    days.forEach(d => {
+      const key = `${d}${p}`;
+      const val = sched[key];
+      const isFree = !val;
+      const isSpecial = val === '자봉' || val === '사제';
+      const sel = selectedSlot === key ? 'selected' : '';
+      let cellClass = isFree ? 'free' : 'has-class';
+      if (isSpecial) cellClass = 'has-class';
+
+      if (isFree) {
+        // 공강 칸: 클릭 가능 (내가 대신 들어갈 수 있는 수업 찾기)
+        html += `<td><button class="cell-btn free ${sel}" onclick="selectSlot('${key}','${d}',${p})">
+          <span class="free-label">공강</span>
+        </button></td>`;
+      } else if (isSpecial) {
+        // 자봉/사제: 클릭 불가
+        html += `<td><button class="cell-btn" style="background:#f3e8ff;color:#9b59b6;cursor:not-allowed;" disabled>
+          <span class="class-label">${val}</span>
+        </button></td>`;
+      } else {
+        html += `<td><button class="cell-btn has-class ${sel}" onclick="selectSlot('${key}','${d}',${p})">
+          <span class="class-label">${val}</span>
+        </button></td>`;
+      }
+    });
+    html += '</tr>';
+  }
+  html += '</tbody>';
+  document.getElementById('timetable').innerHTML = html;
+}
+
+function selectSlot(key, day, period) {
+  const val = teacherSchedule[selectedTeacher][key];
+  if (val === '자봉' || val === '사제') return; // 클릭 무시
+  selectedSlot = key;
+  buildTimetable();
+  const isFree = !val;
+  if (isFree) {
+    findWhoCanReplace(day, period);
+  } else {
+    findSubstitutes(day, period);
+  }
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('resultCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// 내가 대신 들어갈 수 있는 수업 찾기 (공강 칸 클릭 시)
+function findWhoCanReplace(day, period) {
+  const key = `${day}${period}`;
+  const dayNames = {'월':'월요일','화':'화요일','수':'수요일','목':'목요일','금':'금요일'};
+  const dayLabel = dayNames[day];
+
+  // 그 시간에 수업이 있는 선생님 중, 나(선택된 선생님)가 같은 반을 가르치는 경우 찾기
+  const results = [];
+  for (const name of allTeachers) {
+    if (name === selectedTeacher) continue;
+    const sched = teacherSchedule[name];
+    const val = sched[key];
+    if (!val || val === '자봉' || val === '사제') continue; // 수업 없으면 패스
+
+    // 내가 이 반을 가르치는 시간이 있는지 확인
+    const myTimes = [];
+    for (const k of Object.keys(teacherSchedule[selectedTeacher])) {
+      if (teacherSchedule[selectedTeacher][k] === val) {
+        const d = k.slice(0, 1);
+        const p = k.slice(1);
+        myTimes.push(`${dayNames[d]} ${p}교시`);
+      }
+    }
+
+    results.push({ name, classVal: val, myTimes, homeroom: teacherHomeroom[name] });
+  }
+
+  // 정렬: 내가 같은 반 수업 있는 경우 먼저
+  results.sort((a, b) => b.myTimes.length - a.myTimes.length);
+
+  const canCover = results.filter(r => r.myTimes.length > 0);
+  const cannotCover = results.filter(r => r.myTimes.length === 0);
+
+  document.getElementById('resultTitle').textContent = `${selectedTeacher} 선생님 · ${dayLabel} ${period}교시 — 내가 대신 들어갈 수 있는 수업`;
+  document.getElementById('resultCount').textContent = `${results.length}개 수업`;
+
+  let html = '';
+
+  if (canCover.length > 0) {
+    html += `<div style="margin-bottom:10px;font-size:13px;color:#2e6da4;font-weight:bold;">⭐ 내가 같은 반을 가르쳐서 대신 들어갈 수 있는 수업 (${canCover.length}개)</div>`;
+    html += `<div class="result-grid" style="margin-bottom:20px;">`;
+    canCover.forEach(t => {
+      html += `<div class="result-card" style="border-color:#2e6da4;background:#e8f0fe;">
+        <div class="name">${t.name} 선생님</div>
+        <div style="font-size:12px;color:#2e6da4;font-weight:bold;margin-top:4px;">${t.classVal}반</div>
+        
+        <div style="font-size:11px;color:#1a4a8a;margin-top:6px;line-height:1.6;">
+          📚 내 ${t.classVal}반 수업:<br>
+          ${t.myTimes.map(ct => `<b>${ct}</b>`).join('<br>')}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (cannotCover.length > 0) {
+    html += `<div style="margin-bottom:10px;font-size:13px;color:#666;font-weight:bold;">👤 이 시간에 수업 있지만 내가 가르치지 않는 반 (${cannotCover.length}개)</div>`;
+    html += `<div class="result-grid">`;
+    cannotCover.forEach(t => {
+      html += `<div class="result-card" style="background:#f8f9fa;border-color:#ddd;">
+        <div class="name">${t.name} 선생님</div>
+        <div style="font-size:12px;color:#999;margin-top:4px;">${t.classVal}반</div>
+        
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (results.length === 0) {
+    html = '<div class="placeholder"><span class="icon">🎉</span>이 시간에 다른 선생님 수업이 없어요!</div>';
+  }
+
+  document.getElementById('resultBody').innerHTML = html;
+}
+
+function findSubstitutes(day, period) {
+  const key = `${day}${period}`;
+  const targetClass = teacherSchedule[selectedTeacher][key];
+  const isRealClass = targetClass && targetClass !== '자봉' && targetClass !== '사제';
+
+  const dayNames = {'월':'월요일','화':'화요일','수':'수요일','목':'목요일','금':'금요일'};
+
+  const results = [];
+  for (const name of allTeachers) {
+    if (name === selectedTeacher) continue;
+    const sched = teacherSchedule[name];
+    if (sched[key]) continue; // 공강이 아니면 제외
+
+    // 이 선생님이 targetClass를 가르치는 시간 모두 수집
+    let classTimes = [];
+    if (isRealClass) {
+      for (const k of Object.keys(sched)) {
+        if (sched[k] === targetClass) {
+          const d = k.slice(0, 1);
+          const p = k.slice(1);
+          classTimes.push(`${dayNames[d]} ${p}교시`);
+        }
+      }
+    }
+
+    results.push({ name, classTimes, homeroom: teacherHomeroom[name] });
+  }
+
+  // 정렬: 같은 반 가르치는 선생님 먼저, 그 안에서 수업 많은 순
+  results.sort((a, b) => b.classTimes.length - a.classTimes.length);
+
+  const dayLabel = day + '요일';
+  const classLabel = isRealClass ? ` (${targetClass}반 수업)` : '';
+  document.getElementById('resultTitle').textContent = `${selectedTeacher} 선생님 · ${dayLabel} ${period}교시${classLabel} 교체 가능`;
+  document.getElementById('resultCount').textContent = `${results.length}명`;
+
+  const sameClass = results.filter(r => r.classTimes.length > 0);
+  const others = results.filter(r => r.classTimes.length === 0);
+
+  let html = '';
+
+  if (isRealClass && sameClass.length > 0) {
+    html += `<div style="margin-bottom:10px;font-size:13px;color:#27ae60;font-weight:bold;">⭐ ${targetClass}반 수업이 있는 공강 선생님 (${sameClass.length}명) — 교체 가능!</div>`;
+    html += `<div class="result-grid" style="margin-bottom:20px;">`;
+    sameClass.forEach(t => {
+      html += `<div class="result-card" style="border-color:#27ae60;background:#f0faf4;min-width:140px;">
+        <div class="name">${t.name}</div>
+        
+        <div style="font-size:11px;color:#1a7a40;margin-top:6px;line-height:1.6;">
+          🔄 교체 가능 시간:<br>
+          ${t.classTimes.map(ct => `<b>${ct}</b>`).join('<br>')}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (isRealClass && sameClass.length === 0) {
+    html += `<div style="margin-bottom:12px;padding:12px;background:#fff8e1;border-radius:8px;font-size:13px;color:#b8860b;">⚠️ ${targetClass}반을 가르치는 공강 선생님이 없어요. 아래 공강 선생님과 협의가 필요합니다.</div>`;
+  }
+
+  if (others.length > 0) {
+    const label = isRealClass ? `👤 ${targetClass}반 수업 없는 공강 선생님 (${others.length}명)` : `👤 공강인 선생님 (${others.length}명)`;
+    html += `<div style="margin-bottom:10px;font-size:13px;color:#666;font-weight:bold;">${label}</div>`;
+    html += `<div class="result-grid">`;
+    others.forEach(t => {
+      html += `<div class="result-card">
+        <div class="name">${t.name}</div>
+        
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (results.length === 0) {
+    html = '<div class="placeholder"><span class="icon">😅</span>해당 시간에 공강인 선생님이 없습니다</div>';
+  }
+
+  document.getElementById('resultBody').innerHTML = html;
+}
+
+// 초기 렌더
+renderTeachers();
+</script>
+</body>
+</html>
