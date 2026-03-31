@@ -1,6 +1,6 @@
 {
-  "name": "보강·교체 교사 찾기",
-  "short_name": "교체교사찾기",
+  "name": "교체 교사 찾기",
+  "short_name": "교체 교사 찾기",
   "description": "오성고등학교 보강·교체 가능 교사 찾기",
   "start_url": "/osung/",
   "display": "standalone",
