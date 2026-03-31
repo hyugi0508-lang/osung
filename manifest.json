@@ -1,0 +1,22 @@
+{
+  "name": "보강·교체 교사 찾기",
+  "short_name": "교체교사찾기",
+  "description": "오성고등학교 보강·교체 가능 교사 찾기",
+  "start_url": "/osung/",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#1e3a5f",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

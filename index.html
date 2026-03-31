@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1e3a5f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="교체교사찾기">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>보강·교체 교사 찾기 - 2026 학년도 1학기 (2026.03.04. 현재)</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -217,6 +223,10 @@ function findWhoCanReplace(day, period) {
 }
 
 renderTeachers();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/osung/sw.js');
+}
 </script>
 </body>
 </html>
